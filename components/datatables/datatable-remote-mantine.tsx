@@ -9,6 +9,7 @@ interface ColumnProps {
 }
 interface RemoteDataProps {
     url: string;
+    useIndex: boolean;
     cols: ColumnProps[];
 }
 const RemoteDataTable = (props: RemoteDataProps) => {
@@ -18,7 +19,24 @@ const RemoteDataTable = (props: RemoteDataProps) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [sortBy, setSortBy] = useState('name'); // Example sorting key
+    const [adjustCols, setAdjustCols] = useState(props.cols);
 
+    const colIndex = {
+        title:"#",
+        accessor:"__index",
+        render: function (row, rowIndex:number){
+            const realRowIndex = ((currentPage-1)*pageSize)+rowIndex+1;
+            return <>{realRowIndex}</>;
+        },
+    };
+    useEffect(() => {
+        if (props?.useIndex) {
+            const readls = [colIndex,...props.cols];
+            setAdjustCols(readls);
+        } else {
+            setAdjustCols[props.cols];
+        }
+    }, [props?.useIndex,currentPage]);
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -59,7 +77,7 @@ const RemoteDataTable = (props: RemoteDataProps) => {
             {loading ? (
                 <Loader size="xl" />
             ) : (
-                <DataTable columns={props.cols} records={data} recordsPerPage={pageSize} totalRecords={totalCount} onSortChange={handleSortChange} onPageChange={handlePageChange} />
+                <DataTable columns={adjustCols} records={data} recordsPerPage={pageSize} totalRecords={totalCount} onSortChange={handleSortChange} onPageChange={handlePageChange} />
             )}
             <br></br>
             <Pagination total={Math.ceil(totalCount / pageSize)} page={currentPage} onChange={handlePageChange} />
